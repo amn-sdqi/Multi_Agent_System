@@ -24,9 +24,7 @@ Features:
 - Skills Learned: Data handling, tool creation, integration with external libraries.
 - Tools: LangChain’s PandasDataFrameLoader, custom tools for calculations
 
-## Agent 3: 
-
-Task Automation Agent
+## Agent 3: Task Automation Agent
 
 Task: Build an agent that automates a specific workflow, such as drafting emails, scheduling tasks, or generating reports.
 
@@ -36,6 +34,17 @@ Features:
 - Example query: “Schedule a meeting for next Monday at 10 AM.”
 - Skills Learned: API integration, prompt engineering, automation workflows.
 - Tools: LangChain’s Tool class, external APIs (e.g., Gmail, Google Calendar).
+
+## Agent 4:Conversational Q&A Agent with Memory
+
+Task: Build an agent that handles conversational queries with context retention, acting as a domain-specific chatbot (e.g., tech support, HR assistant).
+
+Features:
+- Maintains conversation history using LangChain’s memory (e.g., ConversationBufferMemory).
+- Answers follow-up questions with context (e.g., “Can you clarify what you meant earlier?”).
+- Example query: “Explain neural networks, then give me a simpler explanation.”
+- Skills Learned: Memory management, conversational AI, prompt chaining.
+- Tools: LangChain’s ConversationChain, ConversationBufferMemory.
 
 ##  Agent 5: Decision Support Agent
 
