@@ -17,6 +17,10 @@ from langchain_community.tools import DuckDuckGoSearchRun,WikipediaQueryRun
 from langchain_community.utilities import WikipediaAPIWrapper 
 import json
 import re
+import os
+from google_auth_oauthlib.flow import InstalledAppFlow
+from googleapiclient.discovery import build
+
 
 # Google Model API Use
 #----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -50,13 +54,35 @@ class email_agent(BaseTool):
         return self.mail_access(input)
 
     def mail_access(self, input):
+
+
         credentials = get_gmail_credentials(
             token_file="token.json",
             scopes=["https://mail.google.com/"],
             client_secrets_file="Credentials.json",
         )
+
         api_resource = build_resource_service(credentials=credentials)
         toolkit = GmailToolkit(api_resource=api_resource)
+
+
+        # client_config = {
+        # "installed": {
+        # "client_id": os.getenv("GOOGLE_CLIENT_ID"),
+        # "project_id": os.getenv("GOOGLE_PROJECT_ID"),
+        # "auth_uri": os.getenv("GOOGLE_AUTH_URI"),
+        # "token_uri": os.getenv("GOOGLE_TOKEN_URI"),
+        # "auth_provider_x509_cert_url": os.getenv("GOOGLE_AUTH_PROVIDER_CERT_URL"),
+        # "client_secret": os.getenv("GOOGLE_CLIENT_SECRET"),
+        # "redirect_uris": [os.getenv("GOOGLE_REDIRECT_URI")]
+        #               }
+        # }
+        # flow = InstalledAppFlow.from_client_config(client_config, scopes=["https://mail.google.com/"])
+        # credentials = flow.run_local_server(port=0) 
+        # api_resource = build('gmail', 'v1', credentials=credentials)
+        # toolkit = GmailToolkit(api_resource=api_resource)
+
+
         tools = toolkit.get_tools()
         instructions = """You are an assistant in making report and email ."""
         base_prompt = hub.pull("langchain-ai/openai-functions-template")
@@ -133,8 +159,8 @@ agent_executor = initialize_agent(
 
 # drafting email Prompt------>>>>>>>>>
 
-# report=agent_executor.invoke("darft an email to be sent by me (sheikh shakeel) to My Team (sheikhupdesk@gmail.com) The subject of the email is fifa final match and in the content write about fifa 2018 final match summary in detail and draf it")
-# report["output"]
+report=agent_executor.invoke("darft an email to be sent by me (sheikh shakeel) to My Team (sheikhupdesk@gmail.com) The subject of the email is fifa final match and in the content write about fifa 2018 final match summary in detail and draf it")
+report["output"]
 
 
 # drafting report genrator Prompt------>>>>>>>>>

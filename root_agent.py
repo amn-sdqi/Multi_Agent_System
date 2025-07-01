@@ -65,7 +65,7 @@ tools = [
                         It uses LangChain and Google Gemini LLM (2.0 Flash) to work like a mini research assistant.
                         ## Tools Used""",
     ),
-    Tool(name="NotifyAgent", func=notify_run, description="Send notifications"),
+    # Tool(name="NotifyAgent", func=notify_run, description="Send notifications"),
     Tool(
         name="data_analysis",
         func=data_analysis,
