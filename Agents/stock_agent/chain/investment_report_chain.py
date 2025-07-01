@@ -1,12 +1,11 @@
 # chains/investment_report_chain.py
-
 import logging
-from agents.market_analyst import analyze_market
-from agents.company_researcher import research_company
-from agents.stock_strategist import recommend_stocks
-from agents.team_lead import compile_final_report
+from Agents.stock_agent.agents.market_analyst import analyze_market
+from  Agents.stock_agent.agents.company_researcher import research_company
+from  Agents.stock_agent.agents.stock_strategist import recommend_stocks
+from  Agents.stock_agent.agents.team_lead import compile_final_report
 
-# ✅ Logging Configuration with Timestamps
+#  Logging Configuration with Timestamps
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
@@ -26,9 +25,9 @@ def generate_full_report(symbols):
         str: Final compiled investment report or an error message.
     """
 
-    logger.info("⏳ Starting investment report generation...")
+    logger.info(" Starting investment report generation...")
 
-    # ✅ Input validation
+    #  Input validation
     if not isinstance(symbols, list) or not all(isinstance(s, str) for s in symbols):
         logger.error(" Invalid input. Expected a list of stock ticker strings.")
         return " Invalid input: Expected a list of ticker symbols (e.g., ['AAPL', 'GOOGL'])."
@@ -37,7 +36,7 @@ def generate_full_report(symbols):
         logger.warning(" Less than two tickers provided.")
         return " Please provide at least two company tickers to generate a comparative investment report."
 
-    # ✅ Step 1: Market Analysis
+    #  Step 1: Market Analysis
     try:
         market_analysis = analyze_market(symbols)
         logger.info(" Market analysis completed.")
@@ -45,7 +44,7 @@ def generate_full_report(symbols):
         logger.error(f" Error during market analysis: {e}")
         return f" Error during market analysis: {e}"
 
-    # ✅ Step 2: Company Research (one by one)
+    #  Step 2: Company Research (one by one)
     company_analyses = {}
     for symbol in symbols:
         try:
@@ -55,7 +54,7 @@ def generate_full_report(symbols):
             company_analyses[symbol] = f" Error analyzing {symbol}: {e}"
             logger.warning(f" Error analyzing {symbol}: {e}")
 
-    # ✅ Step 3: Stock Recommendations
+    #  Step 3: Stock Recommendations
     try:
         recommendation_input = {
         "market_analysis": market_analysis,
@@ -68,7 +67,7 @@ def generate_full_report(symbols):
         logger.error(f" Error generating stock recommendations: {e}")
         return f" Error generating stock recommendations: {e}"
 
-    # ✅ Step 4: Compile Final Report
+    #  Step 4: Compile Final Report
     try:
         final_report = compile_final_report(market_analysis, company_analyses, recommendations)
         logger.info(" Final investment report compiled successfully.")

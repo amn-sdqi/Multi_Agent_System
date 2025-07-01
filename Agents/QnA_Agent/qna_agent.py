@@ -6,6 +6,8 @@ from langchain.agents import create_react_agent, AgentExecutor, Tool
 from langchain.memory import ConversationBufferMemory
 from dotenv import load_dotenv
 from langchain import hub
+from load_env import load_environment
+load_environment()
 
 load_dotenv(dotenv_path="../../.env")
 

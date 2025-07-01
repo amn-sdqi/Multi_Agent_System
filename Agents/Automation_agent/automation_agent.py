@@ -3,6 +3,8 @@ from langchain_community.tools.gmail.utils import (
     build_resource_service,
     get_gmail_credentials,
 )
+from load_env import load_environment
+load_environment()
 
 from langchain import hub
 from langchain.agents import (
@@ -21,11 +23,7 @@ from langchain_community.tools import DuckDuckGoSearchRun, WikipediaQueryRun
 from langchain_community.utilities import WikipediaAPIWrapper
 import json
 import re
-
 import os
-from ...load_env import load_environment
- 
-load_environment()
  
 api_key = os.getenv("API_KEY")
 
@@ -161,15 +159,15 @@ agent_executor = initialize_agent(
 
 # drafting email with report generater Prompt------>>>>>>>>>
 
-report=agent_executor.invoke({
-    "input": """Create a today report on 'india win t20 worldcup 2024'.
-                Points are: unbeaten india , way of win jurny, final watch, history.and then draf this report to
-                and then take this report as content and darft an email to be sent by me (sheikh shakeel)
-                to My Team (sheikhupdesk@gmail.com)
-                The subject of the email is report topic
-                and draft it"""
-})
-print(report["output"])
+# report=agent_executor.invoke({
+#     "input": """Create a today report on 'india win t20 worldcup 2024'.
+#                 Points are: unbeaten india , way of win jurny, final watch, history.and then draf this report to
+#                 and then take this report as content and darft an email to be sent by me (sheikh shakeel)
+#                 to My Team (sheikhupdesk@gmail.com)
+#                 The subject of the email is report topic
+#                 and draft it"""
+# })
+# print(report["output"])
 
 # report=agent_executor.invoke("""Create a report on 'final distinace movie'.
 #                                 Points are: all parts , boxoffice colloction, overall rating, about.and then draf this report to

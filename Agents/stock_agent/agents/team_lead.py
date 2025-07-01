@@ -4,6 +4,9 @@ from langchain.agents import initialize_agent, Tool
 from langchain_groq import ChatGroq
 from dotenv import load_dotenv
 import os
+from load_env import load_environment
+load_environment()
+
 
 load_dotenv()
 

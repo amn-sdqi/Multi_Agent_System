@@ -13,6 +13,9 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain_community.tools import DuckDuckGoSearchRun, WikipediaQueryRun
 from langchain_community.utilities.wikipedia import WikipediaAPIWrapper
+from load_env import load_environment
+load_environment()
+
 
 # Load environment variables
 load_dotenv(dotenv_path="../../.env")

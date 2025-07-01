@@ -6,7 +6,10 @@ from dotenv import load_dotenv
 from langchain.agents import initialize_agent, Tool
 from langchain.memory import ConversationBufferMemory
 from langchain_groq import ChatGroq
-from tools.stock_data import fetch_stock_performance
+from Agents.stock_agent.tools.stock_data import fetch_stock_performance
+from load_env import load_environment
+load_environment()
+
 
 # Load environment
 load_dotenv()
@@ -49,7 +52,7 @@ def get_market_agent():
         llm=llm,
         agent="zero-shot-react-description",
         verbose=True,
-        max_iterations=4,  # Limits steps to avoid loops
+        max_iterations=2,  # Limits steps to avoid loops
         memory=memory
     )
 

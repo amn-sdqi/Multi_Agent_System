@@ -5,7 +5,10 @@ from dotenv import load_dotenv
 import logging
 from langchain.agents import initialize_agent, Tool
 from langchain_groq import ChatGroq
-from tools.company_info import get_company_info, get_company_news
+from Agents.stock_agent.tools.company_info import get_company_info, get_company_news
+from load_env import load_environment
+load_environment()
+
 
 # Load environment variables
 load_dotenv()
@@ -37,7 +40,7 @@ agent = initialize_agent(
     tools=tools,
     llm=llm,
     agent="structured-chat-zero-shot-react-description", # type: ignore
-    max_iterations=4,  # Add this to prevent infinite retries
+    max_iterations=2,  # Add this to prevent infinite retries
     verbose=True
 )
 

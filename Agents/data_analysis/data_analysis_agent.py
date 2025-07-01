@@ -17,6 +17,9 @@ from langchain.memory import ConversationBufferMemory
 import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 from datetime import datetime
+from load_env import load_environment
+load_environment()
+
 
 # Configuration
 MAX_DISPLAY_ROWS = 20

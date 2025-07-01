@@ -3,6 +3,9 @@ from langchain_groq import ChatGroq
 from langchain.prompts import PromptTemplate
 from dotenv import load_dotenv
 from pydantic import SecretStr
+from load_env import load_environment
+load_environment()
+
 
 # Load environment variables
 load_dotenv(dotenv_path="../../.env")

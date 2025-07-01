@@ -6,6 +6,9 @@ from transformers.pipelines import pipeline
 import os
 from pydantic import SecretStr
 load_dotenv(dotenv_path="../../.env")
+from load_env import load_environment
+load_environment()
+
 
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 

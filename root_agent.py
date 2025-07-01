@@ -4,9 +4,6 @@ from langchain.agents import create_react_agent, AgentExecutor
 from langchain.memory import ConversationBufferMemory
 from langchain import hub
 from langchain_core.output_parsers import StrOutputParser
-
-
-
 from Agents.Automation_agent.automation_agent import (
     email_agent,
     report_agent,
@@ -15,7 +12,7 @@ from Agents.RAG_researcher.AI_research import research_agent
 from Agents.QnA_Agent.qna_agent import qna_agent_response
 from Agents.Sentiment_Agent.agent_core import analysis_tool
 from Agents.data_analysis.data_analysis_agent import data_analysis
-from Agents.stock_agent.main import main
+from Agents.stock_agent.Stock import stock_query
 
 from dotenv import load_dotenv
 
@@ -24,10 +21,7 @@ load_dotenv()
 primary_memory = ConversationBufferMemory(
     memory_key="chat_history", return_messages=True
 )
-# prompt = PromptTemplate(
-#     input_variables=["input"],
-#     template="Choose tools wisely based on the input query: {input}"
-# )
+
 prompt = hub.pull("hwchase17/react-chat")
 llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash")  
 
@@ -51,7 +45,7 @@ tools = [
         description="Answer the input query and retain the context for future use",
     ),
     Tool(name="AI_investment",
-          func=main,      
+          func=stock_query,      
           description="Analyses the stock market and investment options"),
     Tool(
         name="AI_research_assistant",
