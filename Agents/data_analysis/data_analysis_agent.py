@@ -4,7 +4,7 @@ import os
 import json
 import re
 import shutil
-from typing import Any
+from typing import Any, Dict, List
 from dotenv import load_dotenv
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -25,7 +25,7 @@ load_environment()
 MAX_DISPLAY_ROWS = 20
 MAX_OUTPUT_LENGTH = 1000
 
-load_dotenv(dotenv_path="../../.env")
+load_dotenv()
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
 # Setup output directory
@@ -66,9 +66,12 @@ def get_llm():
 
 def llm_call(prompt: str, operation_name: str = "") -> str:
     """Directly call the LLM and return the response."""
-    response = llm.invoke(prompt)
-    return response.content.strip()
-
+    try:
+        response = llm.invoke(prompt)
+        return response.content.strip()
+    except Exception as e:
+        print(f"LLM call failed for operation '{operation_name}': {str(e)}")
+        return f"LLM call failed: {str(e)}"
 
 def generate_schema(df: pd.DataFrame) -> str:
     """Generate schema information"""
@@ -91,7 +94,7 @@ Return ONLY: simple or complex
     
     result = llm_call(routing_prompt, "Query Classification")
 
-    if "failed" in result or "unavailable" in result or "exceeded" in result:
+    if "failed" in result.lower() or "unavailable" in result.lower() or "exceeded" in result.lower():
         simple_keywords = ['head', 'tail', 'info', 'describe', 'shape', 'show', 'display', 'first', 'last']
         return "simple" if any(keyword in query.lower() for keyword in simple_keywords) else "complex"
     
@@ -139,7 +142,7 @@ def format_result(result: Any) -> str:
         return result_str[:MAX_OUTPUT_LENGTH] + f"... (truncated, {len(result_str) - MAX_OUTPUT_LENGTH} more characters)"
     return result_str
 
-def generate_code(query: str, schema: str) -> str:
+def generate_code(query: str, schema_str: str) -> str:
     """Generate pandas code."""
     prompt = f"""
 Convert the natural language query into correct and safe pandas code.
@@ -152,15 +155,17 @@ Rules:
 5. For numeric column operations, use: df.select_dtypes(include=['number'])
 6. Avoid using 'print()' – just return the code lines.
 
-Schema: {schema}
+Schema: {schema_str}
 Query: "{query}"
 
 Generate only the pandas code:
 """
 
-    
     try:
-        result = llm_call(prompt)
+        result = llm_call(prompt, "Code Generation")
+        if "failed" in result.lower():
+            raise Exception("LLM call failed")
+        
         code = re.sub(r'^```(?:python)?\s*', '', result).rstrip('`')
         return code.replace("print(", "# print(").strip()
     except Exception:
@@ -179,7 +184,7 @@ Generate only the pandas code:
                 return code
         return "df.head()"
 
-def generate_viz_code(query: str, schema: str) -> str:
+def generate_viz_code(query: str, schema_str: str) -> str:
     """Generate visualization code"""
     prompt = f"""
 Create matplotlib/seaborn visualization code. Rules:
@@ -192,7 +197,7 @@ Create matplotlib/seaborn visualization code. Rules:
 7. Always handle numeric data properly
 8. When using palette in countplot, always set hue to the same variable as x and use legend=False
 
-Schema: {schema}
+Schema: {schema_str}
 Query: "{query}"
 
 Generate visualization code:
@@ -200,7 +205,7 @@ Generate visualization code:
     
     result = llm_call(prompt, "Visualization Generation")
 
-    if "failed" in result or "unavailable" in result or "exceeded" in result:
+    if "failed" in result.lower() or "unavailable" in result.lower() or "exceeded" in result.lower():
         return "plt.figure(figsize=(10,6))\ndf.hist()\nplt.title('Data Distribution')"
     
     # More comprehensive cleaning
@@ -242,7 +247,6 @@ def execute_viz(code: str, df: pd.DataFrame) -> str:
     image_path = os.path.join("output", f"plot_{timestamp}.png")
     try:
         context = {'df': df.copy(), 'plt': plt, 'sns': sns, 'np': np}
-        # print(code)
         exec(code, context)
         plt.tight_layout()
         plt.savefig(image_path, dpi=300, bbox_inches='tight')
@@ -281,7 +285,7 @@ Final Summary:
 """
     
     try:
-        return llm_call(prompt)
+        return llm_call(prompt, "Summary Generation")
     except Exception:
         return f"Analysis completed for: {query}"
 
@@ -358,7 +362,7 @@ def visualization_tool(query: str) -> str:
         
         # Generate insights
         try:
-            insights = llm_call(f"Describe insights from visualization: {query}\nSchema: {schema}")
+            insights = llm_call(f"Describe insights from visualization: {query}\nSchema: {schema}", "Insight Generation")
         except Exception:
             insights = f"Visualization created for: {query}"
         
@@ -423,7 +427,7 @@ def suggestion_tool(input_text: str) -> str:
     """
 
     try:
-        suggestions = llm_call(prompt)
+        suggestions = llm_call(prompt, "Suggestion Generation")
         return suggestions
     except Exception as e:
         return f"Could not generate suggestions: {str(e)}"
@@ -444,47 +448,72 @@ if llm:
 else:
     agent = None
 
-# CLI Interface
 @tool
-def data_analysis(path: str, user_query: str):
+def data_analysis(path: str, user_query: str = None):
     """
-    This Agent is an Data Analysis Agent
-    It will analyse the data and can also visualize and return an image
+    This function loads a dataset and provides an interactive analysis interface.
+    It will analyze the data and can also visualize and return an image.
     """
-
-    # Load dataset
-
-    global_df = load_dataset(path)
-    schema = generate_schema(global_df)
-
-    suggestion_tool.invoke(user_query)          
-   
+    global global_df, schema
     
-    if agent:
-        print(f"\n{suggestion_tool.invoke('')}")
+    try:
+        # Load dataset and update global variables
+        global_df = load_dataset(path)
+        schema = generate_schema(global_df)
+        
+        print(f"Dataset loaded successfully!")
+        print(f"Shape: {global_df.shape}")
+        print(f"Columns: {list(global_df.columns)}")
+        
+        # Show initial suggestions
+        if agent:
+            print(f"\n{suggestion_tool.invoke('')}")
+        
+        # If a specific query was provided, process it
+        if user_query:
+            try:
+                result = agent.invoke({"input": user_query})
+                print(f"\n{result['output']}")
+                return result['output']
+            except Exception as e:
+                error_msg = f"Error processing query '{user_query}': {str(e)}"
+                print(error_msg)
+                return error_msg
+        
+        # Interactive mode
+        print("\nEntering interactive mode. Type 'exit' or 'quit' to end.")
+        print("Type 'suggestions' to see analysis suggestions.")
+        
+        while True:
+            try:
+                query = input("\nQuery: ").strip()
+                if query.lower() in ["exit", "quit"]:
+                    print("Goodbye!")
+                    break
+                if not query:
+                    continue
 
-    # Main loop
-    while True:
-        try:
-            user_query = input("\nQuery: ").strip()
-            if user_query.lower() in ["exit", "quit"]:
-                print("Goodbye!")
+                # Handle special commands
+                if query.lower() == "suggestions":
+                    print("\n**Suggested Analyses:**")
+                    print(suggestion_tool.invoke(''))
+                    continue
+
+                if agent:
+                    result = agent.invoke({"input": query})
+                    print(f"\n{result['output']}")
+                else:
+                    print("Agent not initialized. Please check your GROQ_API_KEY.")
+                    
+                print("-" * 50)
+
+            except KeyboardInterrupt:
+                print("\nSession ended!")
                 break
-            if not user_query:
-                continue
-
-            # Handle special commands
-            if user_query.lower() == "suggestions":
-                print("\n**Suggested Analyses:**")
-                print(suggestion_tool.invoke(''))
-                continue
-
-            result = agent.invoke({"input": user_query})
-            print(f"\n{result['output']}")
-            print("-" * 50)
-
-        except KeyboardInterrupt:
-            print("\nSession ended!")
-            break
-        except Exception as e:
-            print(f"\nError: {str(e)}")
+            except Exception as e:
+                print(f"\nError: {str(e)}")
+                
+    except Exception as e:
+        error_msg = f"Failed to load dataset: {str(e)}"
+        print(error_msg)
+        return error_msg
