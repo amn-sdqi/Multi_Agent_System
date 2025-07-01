@@ -1,0 +1,24 @@
+# LangChain Core & Integrations
+langchain
+langchain-openai
+langchain-anthropic
+langchain-google-genai
+langchain-huggingface
+langchain-community
+
+# Google Gemini SDK
+google-generativeai
+
+# PDF & Web Document Loaders
+duckduckgo-search
+beautifulsoup4
+html2text
+PyMuPDF  # Fast PDF parsing used by PyPDFLoader
+
+# Env management
+python-dotenv
+
+# Streamlit UI (optional)
+streamlit
+
+
