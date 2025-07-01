@@ -7,7 +7,7 @@ from langchain.memory import ConversationBufferMemory
 from dotenv import load_dotenv
 from langchain import hub
 
-load_dotenv()
+load_dotenv(dotenv_path="../../.env")
 
 GOOGLE_API_KEY=os.getenv('GOOGLE_API_KEY')
 

@@ -2,16 +2,20 @@ import os
 from langchain_groq import ChatGroq
 from langchain.prompts import PromptTemplate
 from dotenv import load_dotenv
+from pydantic import SecretStr
 
 # Load environment variables
-load_dotenv()
+load_dotenv(dotenv_path="../../.env")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
 # Initialize LLM
-model = ChatGroq(model="llama-3.3-70b-versatile", api_key=GROQ_API_KEY)
+model = ChatGroq(
+    model="llama-3.3-70b-versatile",
+    api_key=SecretStr(GROQ_API_KEY) if GROQ_API_KEY else None,
+)
 
 
-def extract_valid_companies(user_query: str) -> list | None:
+def extract_valid_companies(user_query: str) -> str | None:
     """
     Given a user query, use the Gemini model to extract a list of valid company names.
     Returns:
@@ -32,12 +36,11 @@ def extract_valid_companies(user_query: str) -> list | None:
 
                     Respond only with the appropriate message. Do not explain what you're doing.
                 """,
-        input_variables=["query"]
+        input_variables=["query"],
     )
 
     prompt = template.format(query=user_query)
     response = model.invoke(prompt)
-
 
     return response.content
 

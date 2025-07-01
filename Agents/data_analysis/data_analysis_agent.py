@@ -4,7 +4,7 @@ import os
 import json
 import re
 import shutil
-from typing import Any, Dict, List
+from typing import Any
 from dotenv import load_dotenv
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -22,7 +22,7 @@ from datetime import datetime
 MAX_DISPLAY_ROWS = 20
 MAX_OUTPUT_LENGTH = 1000
 
-load_dotenv()
+load_dotenv(dotenv_path="../../.env")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
 # Setup output directory

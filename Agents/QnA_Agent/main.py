@@ -2,7 +2,8 @@ from fastapi import FastAPI
 from dotenv import load_dotenv
 from qna_agent import qna_agent_response  # Absolute import
 
-load_dotenv()
+load_dotenv(dotenv_path="../../.env")
+
 
 app = FastAPI(title="qna Agent")
 

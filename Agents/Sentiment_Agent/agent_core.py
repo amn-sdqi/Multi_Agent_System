@@ -5,7 +5,8 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from transformers.pipelines import pipeline
 import os
 from pydantic import SecretStr
-load_dotenv()  
+load_dotenv(dotenv_path="../../.env")
+
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
 llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash", api_key=SecretStr(GOOGLE_API_KEY) if GOOGLE_API_KEY else None)
