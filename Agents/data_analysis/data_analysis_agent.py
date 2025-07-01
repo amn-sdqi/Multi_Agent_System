@@ -17,8 +17,6 @@ from langchain.memory import ConversationBufferMemory
 import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 from datetime import datetime
-from typing import Optional
-
 
 # Configuration
 MAX_DISPLAY_ROWS = 20
@@ -52,35 +50,22 @@ def load_dataset(path: str) -> pd.DataFrame:
     else:
         raise ValueError("Unsupported file type")
 
-def create_llm_with_fallback():
-    """Create LLM with fallback handling"""
-    try:
-        return ChatGroq(temperature=0, model="llama3-70b-8192", api_key=GROQ_API_KEY)
-    except Exception as e:
-        print(f"Primary LLM failed: {e}")
-        return None
+# Initialize the LLM
+llm = ChatGroq(
+    temperature=0,
+    model="llama3-70b-8192",
+    api_key=GROQ_API_KEY
+)
 
-llm = create_llm_with_fallback()
+def get_llm():
+    """Return the LLM instance."""
+    return llm
 
-def safe_llm_call(prompt: str, operation_name: str) -> str:
-    """Safe LLM call with comprehensive error handling"""
-    if not llm:
-        return f"LLM unavailable. {operation_name} failed - API connection issue."
-    
-    try:
-        response = llm.invoke(prompt)
-        return response.content.strip()
-    except Exception as e:
-        error_msg = str(e).lower()
-        
-        if "rate limit" in error_msg:
-            return f"{operation_name} failed - Rate limit exceeded. Try simpler queries."
-        elif "api key" in error_msg:
-            return f"{operation_name} failed - API authentication issue."
-        elif "timeout" in error_msg:
-            return f"{operation_name} failed - Request timeout."
-        else:
-            return f"{operation_name} failed - {str(e)}"
+def llm_call(prompt: str, operation_name: str = "") -> str:
+    """Directly call the LLM and return the response."""
+    response = llm.invoke(prompt)
+    return response.content.strip()
+
 
 def generate_schema(df: pd.DataFrame) -> str:
     """Generate schema information"""
@@ -101,7 +86,7 @@ Query: "{query}"
 Return ONLY: simple or complex
 """
     
-    result = safe_llm_call(routing_prompt, "Query Classification")
+    result = llm_call(routing_prompt, "Query Classification")
 
     if "failed" in result or "unavailable" in result or "exceeded" in result:
         simple_keywords = ['head', 'tail', 'info', 'describe', 'shape', 'show', 'display', 'first', 'last']
@@ -152,23 +137,30 @@ def format_result(result: Any) -> str:
     return result_str
 
 def generate_code(query: str, schema: str) -> str:
-    """Generate pandas code"""
+    """Generate pandas code."""
     prompt = f"""
-Convert natural language to pandas code. Rules:
-1. Use 'df' as dataframe variable
-2. Return only code, no explanations
-3. For numeric operations, use df.select_dtypes(include=['number'])
-4. No print() statements
+Convert the natural language query into correct and safe pandas code.
+
+Rules:
+1. Use 'df' as the DataFrame variable.
+2. Return ONLY valid Python code (no explanations, markdown, or ``` blocks).
+3. Do NOT use '.loc' after 'groupby()', 'mean()', or any chained statistical operation.
+4. Filter rows using boolean indexing BEFORE applying 'groupby' or aggregations.
+5. For numeric column operations, use: df.select_dtypes(include=['number'])
+6. Avoid using 'print()' – just return the code lines.
 
 Schema: {schema}
 Query: "{query}"
 
-Generate pandas code:
+Generate only the pandas code:
 """
-    
-    result = safe_llm_call(prompt, "Code Generation")
 
-    if "failed" in result or "unavailable" in result or "exceeded" in result:
+    
+    try:
+        result = llm_call(prompt)
+        code = re.sub(r'^```(?:python)?\s*', '', result).rstrip('`')
+        return code.replace("print(", "# print(").strip()
+    except Exception:
         # Simple fallbacks
         query_lower = query.lower()
         fallbacks = {
@@ -183,9 +175,6 @@ Generate pandas code:
             if key in query_lower:
                 return code
         return "df.head()"
-    
-    code = re.sub(r'^```(?:python)?\s*', '', result).rstrip('`')
-    return code.replace("print(", "# print(").strip()
 
 def generate_viz_code(query: str, schema: str) -> str:
     """Generate visualization code"""
@@ -198,6 +187,7 @@ Create matplotlib/seaborn visualization code. Rules:
 5. If the user asks for a subplot, generate a matplotlib subplot (using plt.subplots) instead of a single plot
 6. Do not use plt.figure when generating subplot use plt.subplots
 7. Always handle numeric data properly
+8. When using palette in countplot, always set hue to the same variable as x and use legend=False
 
 Schema: {schema}
 Query: "{query}"
@@ -205,7 +195,7 @@ Query: "{query}"
 Generate visualization code:
 """
     
-    result = safe_llm_call(prompt, "Visualization Generation")
+    result = llm_call(prompt, "Visualization Generation")
 
     if "failed" in result or "unavailable" in result or "exceeded" in result:
         return "plt.figure(figsize=(10,6))\ndf.hist()\nplt.title('Data Distribution')"
@@ -271,23 +261,26 @@ def open_image(image_path: str):
     except:
         print(f"Image saved at: {os.path.abspath(image_path)}")
 
-def summarize_result(query: str, result: Any, code: str = "") -> str:
-    """Generate result summary"""
+def generate_summary(query: str, result: str, code: str = "") -> str:
+    """Generate result summary."""
     prompt = f"""
-Provide insights about this analysis result (2-3 sentences):
+You are a data analyst assistant.
+
+Given the following query, its analysis result (as a table or value), and the code used to get it — your job is to write a 2-3 sentence summary that answers the user's question directly and clearly.
+
+Do NOT explain how the result was calculated. Focus ONLY on summarizing the result.
 
 Query: {query}
 Result: {str(result)[:500]}
 Code: {code}
 
-Summary:
+Final Summary:
 """
     
-    summary = safe_llm_call(prompt, "Result Summarization")
-
-    if "failed" in summary or "unavailable" in summary or "exceeded" in summary:
+    try:
+        return llm_call(prompt)
+    except Exception:
         return f"Analysis completed for: {query}"
-    return summary
 
 @tool
 def smart_analysis_tool(query: str) -> str:
@@ -297,33 +290,37 @@ def smart_analysis_tool(query: str) -> str:
     """
     global last_analysis_result
     
+    if global_df is None:
+        return "No dataset loaded. Please load a dataset first."
+    
     complexity = classify_query_complexity(query)
     
     try:
         code = generate_code(query, schema)
         raw_result = execute_code(code, global_df)
+        formatted_result = format_result(raw_result)
         
-        # FIX: Check for actual error messages from execute_code
-        if "Error:" in str(raw_result) or "failed" in str(raw_result).lower():
+        # Check for execution errors
+        if "Error:" in str(raw_result):
             summary = f"Analysis failed: {raw_result}"
         else:
             if complexity == "simple":
                 summary = f"{query}"
             else:
-                summary = summarize_result(query, raw_result, code)
+                summary = generate_summary(query, formatted_result, code)
         
         # Store result
         last_analysis_result = {
             'query': query,
             'summary': summary,
-            'raw_result': str(raw_result),
+            'raw_result': formatted_result,
             'code': code,
             'complexity': complexity,
             'timestamp': datetime.now().strftime("%H:%M:%S")
         }
         
         # Return formatted response
-        response = f"**Analysis Summary:**\n{summary}\n\n**Result:**\n{raw_result}"
+        response = f"**Analysis Summary:**\n{summary}\n\n**Result:**\n{formatted_result}"
         if complexity == "complex":
             response += f"\n\n**Code Used:** {code}"
         
@@ -346,18 +343,20 @@ def visualization_tool(query: str) -> str:
     """Create data visualizations with AI-generated code."""
     global last_analysis_result
     
+    if global_df is None:
+        return "No dataset loaded. Please load a dataset first."
+    
     try:
         code = generate_viz_code(query, schema)
         image_path = execute_viz(code, global_df)
         
-
         if "failed" in image_path.lower() or "error" in image_path.lower():
             return f"Visualization failed: {image_path}"
         
         # Generate insights
-        insights = safe_llm_call(f"Describe insights from visualization: {query}\nSchema: {schema}", "Plot Insights")
-
-        if "failed" in insights or "unavailable" in insights or "exceeded" in insights:
+        try:
+            insights = llm_call(f"Describe insights from visualization: {query}\nSchema: {schema}")
+        except Exception:
             insights = f"Visualization created for: {query}"
         
         # Store result
@@ -381,20 +380,50 @@ def visualization_tool(query: str) -> str:
 
 @tool
 def suggestion_tool(input_text: str) -> str:
-    """Generate analysis suggestions based on dataset."""
-    prompt = f"""
-Based on this dataset, suggest 5-6 specific analysis questions:
-Important: 
-- Provide NATURAL LANGUAGE questions, not code
-- No SQL queries, no pandas code
-- Questions should be conversational and easy to ask
-- Focus on data exploration, insights, and analysis
-Schema: {schema}
+    """Generate valid analysis questions based on dataset schema and types."""
+    if not schema:
+        return "No dataset loaded. Please load a dataset first to get suggestions."
 
-Format as numbered list with actionable queries.
-"""
-    suggestions = safe_llm_call(prompt, "Suggestions")
-    return suggestions
+    prompt = f"""
+    You are a smart data analysis assistant.
+
+    Based on the dataset schema below (which includes column names and types), generate exactly 5 or 6 specific and valid **natural language analysis questions** a user might ask.
+
+    Only ask questions that are logically valid for the **column's data type**.
+
+    Rules:
+    - For **categorical columns**, you can ask about:
+        • Most/least common category
+        • Category-wise distribution
+        • Count of unique categories
+        • Relationships with other categorical or numerical columns
+    - For **numerical columns**, you can ask about:
+        • Average, min, max, sum, distribution
+        • Correlation with other columns
+        • Trends over time (if there's a date column)
+    - For **date columns**, you can ask about:
+        • Trends over time
+        • Time-based grouping (daily, monthly, yearly)
+    - DO NOT ask about impossible analysis (e.g., "sum of a category")
+
+    Format:
+    Return only the questions as a clean numbered list.
+    Do NOT include explanations, markdown, or extra characters.
+
+    Schema:
+    {schema}
+
+    Format:
+    1. Question one
+    2. Question two
+    ...
+    """
+
+    try:
+        suggestions = llm_call(prompt)
+        return suggestions
+    except Exception as e:
+        return f"Could not generate suggestions: {str(e)}"
 
 # Initialize tools and agent
 tools = [smart_analysis_tool, visualization_tool, suggestion_tool]
@@ -426,8 +455,6 @@ def data_analysis(path: str, user_query: str):
     schema = generate_schema(global_df)
 
     suggestion_tool.invoke(user_query)          
-  
-
    
     
     if agent:
@@ -458,4 +485,3 @@ def data_analysis(path: str, user_query: str):
             break
         except Exception as e:
             print(f"\nError: {str(e)}")
-            
