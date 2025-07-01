@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from Agents.Automation_agent.Automation_agent.automation_agent import (
+from Agents.Automation_agent.automation_agent import (
     email_agent,
     report_agent,
 )
