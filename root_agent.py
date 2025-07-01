@@ -1,26 +1,25 @@
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_core.prompts import PromptTemplate
 from langchain_core.tools import Tool
 from langchain.agents import create_react_agent, AgentExecutor
 from langchain.memory import ConversationBufferMemory
 from langchain import hub
 from langchain_core.output_parsers import StrOutputParser
-import requests
-import os
 
-from dotenv import load_dotenv
 
-load_dotenv()
 
 from Agents.Automation_agent.automation_agent import (
     email_agent,
     report_agent,
 )
+from Agents.RAG_researcher.AI_research import research_agent
 from Agents.QnA_Agent.qna_agent import qna_agent_response
 from Agents.Sentiment_Agent.agent_core import analysis_tool
-from Agents.RAG_researcher.AI_research import research_agent
 from Agents.data_analysis.data_analysis_agent import data_analysis
 from Agents.stock_agent.main import main
+
+from dotenv import load_dotenv
+
+load_dotenv()
 
 primary_memory = ConversationBufferMemory(
     memory_key="chat_history", return_messages=True
@@ -65,7 +64,7 @@ tools = [
                         It uses LangChain and Google Gemini LLM (2.0 Flash) to work like a mini research assistant.
                         ## Tools Used""",
     ),
-    # Tool(name="NotifyAgent", func=notify_run, description="Send notifications"),
+    Tool(name="NotifyAgent", func=notify_run, description="Send notifications"),
     Tool(
         name="data_analysis",
         func=data_analysis,

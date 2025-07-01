@@ -1,23 +1,22 @@
-import warnings
-warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-from tools.ticker_lookup import TickerLookupTool
-from tools.query_parser import extract_valid_companies
 from chain.investment_report_chain import generate_full_report
-import ast
-
-import os
-import ast
-import warnings
 from dotenv import load_dotenv
 from langchain_groq import ChatGroq
 from langchain.prompts import PromptTemplate
+from tools.ticker_lookup import TickerLookupTool
+from tools.query_parser import extract_valid_companies
+
+import ast
+import os
+import warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 # Ignore deprecation warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 # Load environment variables
-load_dotenv()
+load_dotenv(dotenv_path="../../.env")
+
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
 # Initialize LLM

@@ -15,7 +15,8 @@ from langchain_community.tools import DuckDuckGoSearchRun, WikipediaQueryRun
 from langchain_community.utilities.wikipedia import WikipediaAPIWrapper
 
 # Load environment variables
-load_dotenv()
+load_dotenv(dotenv_path="../../.env")
+
 # Step 1: Configure Gemini model
 llm = ChatGoogleGenerativeAI(
     model="gemini-2.0-flash", google_api_key=os.environ.get("GOOGLE_API_KEY")
