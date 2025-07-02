@@ -46,8 +46,3 @@ def extract_valid_companies(user_query: str) -> str | None:
     response = model.invoke(prompt)
 
     return response.content
-
-
-# query = input("Query : ")
-# result = extract_valid_companies(query)
-# print(result.content)
