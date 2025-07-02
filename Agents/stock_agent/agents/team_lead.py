@@ -64,5 +64,5 @@ Please format the response clearly using **headings**, **bullet points**, and **
 Output should feel like a polished executive summary. Be concise but insightful.
 """
 
-    return agent.invoke({"prompt": prompt})
+    return agent.invoke({"input": prompt})
     
