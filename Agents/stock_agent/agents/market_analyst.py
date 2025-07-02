@@ -52,8 +52,9 @@ def get_market_agent():
         llm=llm,
         agent="zero-shot-react-description",
         verbose=True,
-        max_iterations=2,  # Limits steps to avoid loops
-        memory=memory
+        max_iterations=4,  # Limits steps to avoid loops
+        memory=memory,
+        handle_parsing_errors=True 
     )
 
 # Main function to analyze market
