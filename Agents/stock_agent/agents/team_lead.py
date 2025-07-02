@@ -59,7 +59,7 @@ Now, based on the above, write a structured and well-formatted investment report
    - Justification based on the data
 5. Rank stocks from best to worst recommendation.
     like : Apple > Microsoft > Google 
-🪄 Please format the response clearly using **headings**, **bullet points**, and **rankings if relevant**. Keep the tone professional and informative, suitable for business stakeholders.
+Please format the response clearly using **headings**, **bullet points**, and **rankings if relevant**. Keep the tone professional and informative, suitable for business stakeholders.
 
 Output should feel like a polished executive summary. Be concise but insightful.
 """
