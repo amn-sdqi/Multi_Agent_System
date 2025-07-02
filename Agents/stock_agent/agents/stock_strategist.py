@@ -34,7 +34,7 @@ agent = initialize_agent(
     llm=llm,
     agent="zero-shot-react-description",
     verbose=True,
-    max_iterations=2,
+    max_iterations=3,
     handle_parsing_errors=True  # This will stop the agent from crashing
 )
 
