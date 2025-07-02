@@ -79,5 +79,5 @@ def stock_query(user_query):
 
 if __name__ == "__main__":
     user_query = input("Enter your investment query: ")
-    main(user_query)
+    stock_query(user_query)
 
