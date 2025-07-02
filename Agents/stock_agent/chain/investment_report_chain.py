@@ -61,7 +61,6 @@ def generate_full_report(symbols):
         "company_profiles": company_analyses
         }
         recommendations = recommend_stocks(recommendation_input)
-        # recommendations = recommend_stocks(symbols)
         logger.info(" Stock recommendations generated.")
     except Exception as e:
         logger.error(f" Error generating stock recommendations: {e}")
