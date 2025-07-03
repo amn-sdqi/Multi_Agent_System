@@ -169,8 +169,8 @@ agent_executor = initialize_agent(
 
 # drafting email Prompt------>>>>>>>>>
 
-report=agent_executor.invoke("darft an email to be sent by me (sheikh shakeel) to My Team (sheikhupdesk@gmail.com) The subject of the email is fifa final match and in the content write about fifa 2018 final match summary in detail and draf it")
-report["output"]
+# report=agent_executor.invoke("darft an email to be sent by me (sheikh shakeel) to My Team (sheikhupdesk@gmail.com) The subject of the email is fifa final match and in the content write about fifa 2018 final match summary in detail and draf it")
+# report["output"]
 
 
 # drafting report genrator Prompt------>>>>>>>>>
